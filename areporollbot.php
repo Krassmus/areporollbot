@@ -49,7 +49,7 @@ if ($message !== null) {
         'method' => "sendMessage",
         'chat_id' => $body['message']['chat']['id'],
         'text' => $message,
-        'parse_mode' => "MarkdownV2"
+        'parse_mode' => "Markdown"
     );
     $message = json_encode($message);
     header("Status-Code: 200");
