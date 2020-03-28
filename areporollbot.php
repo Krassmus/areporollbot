@@ -137,6 +137,8 @@ if (stripos($body['message']['text'], "/drawcard") === 0) {
         $directmessage = "You just drew:\n";
         $directmessage .= "*".$card['name']."* : ".$card['description']."\n\n";
         $directmessage .= "In the group chat type */play ".$card['name']."* to reveal and play this card.";
+
+        $message = $body['message']['from']['first_name'] . " draws a card.";
     }
 }
 if (stripos($body['message']['text'], "/undrawcard") === 0) {
