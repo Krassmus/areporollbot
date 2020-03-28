@@ -174,7 +174,7 @@ if ($directmessage !== null) {
     if ($chat_id) {
         $directmessage = array(
             'chat_id' => $chat_id,
-            'text' => $directmessage,
+            'text' => utf8encode($directmessage),
             'parse_mode' => "Markdown"
         );
         $url = "https://api.telegram.org/bot".$apikey."/sendMessage";
