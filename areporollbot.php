@@ -50,7 +50,6 @@ if ($pdo && $body['message']['chat']['type'] === "private") {
         'chat_id' => $body['message']['chat']['id'],
         'player_id' => $body['message']['from']['id']
     ]);
-    $message = "okay";
 }
 if (stripos($body['message']['text'], "/help") === 0) {
     //displays a help-message:
@@ -129,25 +128,34 @@ if (stripos($body['message']['text'], "/undrawcard") === 0) {
 
 //now send some messages:
 if ($directmessage !== null) {
-    $directmessage = array(
-        'chat_id' => $body['message']['from']['id'],
-        'text' => $directmessage,
-        'parse_mode' => "Markdown"
-    );
-    $url = "https://api.telegram.org/bot".$apikey."/sendMessage";
+    $statement = $pdo->prepare("
+        SELECT chat_id FROM privatechats WHERE player_id = ?
+    ");
+    $statement->execute([$body['message']['from']['id']]);
+    $chat_id = $statement->fetch(PDO::FETCH_COLUMN, 0);
+    if ($chat_id) {
+        $directmessage = array(
+            'chat_id' => $chat_id,
+            'text' => $directmessage,
+            'parse_mode' => "Markdown"
+        );
+        $url = "https://api.telegram.org/bot".$apikey."/sendMessage";
 
-    $r = curl_init();
-    $header = ["Content-Type: application/json"];
-    curl_setopt($r, CURLOPT_URL, "https://api.telegram.org/bot".$apikey."/sendMessage");
-    curl_setopt($r, CURLOPT_POST, true);
-    curl_setopt($r, CURLOPT_HTTPHEADER, $header);
-    curl_setopt($r, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($r, CURLOPT_POSTFIELDS, json_encode($directmessage));
-    curl_setopt($r, CURLOPT_FAILONERROR, true);
-    $success = json_decode(curl_exec($r), true);
-    $debug = json_encode($directmessage);
-    if (!$success['ok']) {
-        $message =  $success['description'];
+        $r = curl_init();
+        $header = ["Content-Type: application/json"];
+        curl_setopt($r, CURLOPT_URL, "https://api.telegram.org/bot".$apikey."/sendMessage");
+        curl_setopt($r, CURLOPT_POST, true);
+        curl_setopt($r, CURLOPT_HTTPHEADER, $header);
+        curl_setopt($r, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($r, CURLOPT_POSTFIELDS, json_encode($directmessage));
+        curl_setopt($r, CURLOPT_FAILONERROR, true);
+        $success = json_decode(curl_exec($r), true);
+        $debug = json_encode($directmessage);
+        if (!$success['ok']) {
+            $message =  $success['description'];
+        }
+    } else {
+        $message = "Okay. But couldn't answer you. Write me a private message first.";
     }
 }
 if ($message !== null) {
