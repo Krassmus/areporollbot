@@ -4,7 +4,7 @@ $pdo = false;
 $apikey = null;
 
 if (file_exists(__DIR__."/config.php")) {
-    include file_exists(__DIR__."/config.php");
+    include __DIR__."/config.php";
     //now we possibly have a $pdo object with a mysql database and a $apikey;
 }
 
