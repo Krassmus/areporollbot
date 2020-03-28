@@ -125,9 +125,15 @@ if ($directmessage !== null) {
     curl_setopt($r, CURLOPT_URL, "https://api.telegram.org/bot".$apikey."/sendMessage");
     curl_setopt($r, CURLOPT_POST, true);
     curl_setopt($r, CURLOPT_HTTPHEADER, $header);
-    curl_setopt($r, CURLOPT_RETURNTRANSFER, true);
+    //curl_setopt($r, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($r, CURLOPT_POSTFIELDS, json_encode($directmessage));
-    curl_exec($r);
+    curl_setopt($r, CURLOPT_FAILONERROR, true);
+    $success = curl_exec($r);
+    if (!$success) {
+        $message =  "cURL-error: ".curl_error($r);
+    } else {
+        $message = json_encode($directmessage);
+    }
 }
 if ($message !== null) {
     $message = array(
