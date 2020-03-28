@@ -70,7 +70,7 @@ if (stripos($body['message']['text'], "/mycards") === 0) {
         ");
         $statement->execute([
             'chat_id' => $body['message']['chat']['id'],
-            'player_id' => $body['message']['user']['id']
+            'player_id' => $body['message']['from']['id']
         ]);
         $cards = [];
         foreach ($statement->fetchAll(PDO::FETCH_ASSOC) as $card) {
@@ -126,7 +126,7 @@ if ($message !== null) {
 }
 if ($directmessage !== null) {
     $directmessage = array(
-        'chat_id' => "@channel".$body['message']['user']['username'],
+        'chat_id' => "@channel".$body['message']['from']['username'],
         'text' => $directmessage,
         'parse_mode' => "Markdown"
     );
