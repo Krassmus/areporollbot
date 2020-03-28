@@ -2,6 +2,7 @@
 
 $pdo = false;
 $apikey = null;
+$debug = null;
 
 if (file_exists(__DIR__."/config.php")) {
     include __DIR__."/config.php";
@@ -129,10 +130,9 @@ if ($directmessage !== null) {
     curl_setopt($r, CURLOPT_POSTFIELDS, json_encode($directmessage));
     curl_setopt($r, CURLOPT_FAILONERROR, true);
     $success = curl_exec($r);
+    $debug = json_encode($directmessage);
     if (!$success) {
         $message =  "cURL-error: ".curl_error($r);
-    } else {
-        $message = json_encode($directmessage);
     }
 }
 if ($message !== null) {
@@ -147,5 +147,9 @@ if ($message !== null) {
     header("Version: HTTP/1.1");
     header("Content-Type: application/json");
     echo $message;
-    die();
+}
+if ($debug !== null) {
+    file_put_contents(__DIR__."/debuglast.txt", $debug);
+} else {
+    @unlink(__DIR__."/debuglast.txt");
 }
