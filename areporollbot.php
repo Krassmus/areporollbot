@@ -55,7 +55,8 @@ if (stripos($body['message']['text'], "/help") === 0) {
     //displays a help-message:
     $message = "This is a bot for the roleplaying game Arepo. And these are my commands you can use:\n\n";
     $message .= "*/help* : Get this info.\n\n";
-    $message .= "*/roll 4* : Roll 4 six-sided dice, each 1 erases itself and the highest other die, and after that only the three highest dice get added together. This is a result between 0 and 18.";
+    $message .= "*/roll 4* : Roll 4 six-sided dice, each 1 erases itself and the highest other die, and after that only the three highest dice get added together. This is a result between 0 and 18.\n\n";
+    $message .= "*/mycards* : I will you write your cards in a private chat. But you need to start the private chat first by writing me a private message.";
 }
 if (stripos($body['message']['text'], "/roll") === 0) {
     //rolls dice in the arepo way:
