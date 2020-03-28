@@ -37,6 +37,19 @@ $body = json_decode(file_get_contents("php://input"), true);
 if (!isset($body['message']['text'])) {
     $body = $_REQUEST;
 }
+if ($pdo && $body['message']['chat']['type'] === "private") {
+    $statement = $pdo->prepare("
+        INSERT IGNORE INTO privatechats
+        SET player_id = :player_id,
+            chat_id = :chat_id
+        ON DUPLICATE KEY UPDATE
+            chat_id = :chat_id
+    ");
+    $statement->execute([
+        'chat_id' => $body['message']['chat']['id'],
+        'player_id' => $body['message']['from']['id']
+    ]);
+}
 if (stripos($body['message']['text'], "/help") === 0) {
     //displays a help-message:
     $message = "This is a bot for the roleplaying game Arepo. And these are my commands you can use:\n\n";
@@ -115,7 +128,7 @@ if (stripos($body['message']['text'], "/undrawcard") === 0) {
 //now send some messages:
 if ($directmessage !== null) {
     $directmessage = array(
-        'chat_id' => "@".$body['message']['from']['username'],
+        'chat_id' => $body['message']['from']['id'],
         'text' => $directmessage,
         'parse_mode' => "Markdown"
     );
