@@ -110,23 +110,11 @@ if (stripos($body['message']['text'], "/undrawcard") === 0) {
         }
     }
 }
-if ($message !== null) {
-    $message = array(
-        'method' => "sendMessage",
-        'chat_id' => $body['message']['chat']['id'],
-        'text' => $message,
-        'parse_mode' => "Markdown"
-    );
-    $message = json_encode($message);
-    header("Status-Code: 200");
-    header("Version: HTTP/1.1");
-    header("Content-Type: application/json");
-    echo $message;
-    die();
-}
+
+//now send some messages:
 if ($directmessage !== null) {
     $directmessage = array(
-        'chat_id' => "@channel".$body['message']['from']['username'],
+        'chat_id' => $body['message']['from']['username'],
         'text' => $directmessage,
         'parse_mode' => "Markdown"
     );
@@ -139,7 +127,19 @@ if ($directmessage !== null) {
     curl_setopt($r, CURLOPT_HTTPHEADER, $header);
     curl_setopt($r, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($r, CURLOPT_POSTFIELDS, json_encode($directmessage));
-
     curl_exec($r);
+}
+if ($message !== null) {
+    $message = array(
+        'method' => "sendMessage",
+        'chat_id' => $body['message']['chat']['id'],
+        'text' => $message,
+        'parse_mode' => "Markdown"
+    );
+    $message = json_encode($message);
+    header("Status-Code: 200");
+    header("Version: HTTP/1.1");
+    header("Content-Type: application/json");
+    echo $message;
     die();
 }
