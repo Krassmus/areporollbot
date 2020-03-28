@@ -37,11 +37,13 @@ if (!isset($body['message']['text'])) {
     $body = $_REQUEST;
 }
 if (stripos($body['message']['text'], "/help") === 0) {
+    //displays a help-message:
     $message = "This is a bot for the roleplaying game Arepo. And these are my commands you can use:\n\n";
     $message .= "*/help* : Get this info.\n\n";
     $message .= "*/roll 4* : Roll 4 six-sided dice, each 1 erases itself and the highest other die, and after that only the three highest dice get added together. This is a result between 0 and 18.";
 }
 if (stripos($body['message']['text'], "/roll") === 0) {
+    //rolls dice in the arepo way:
     preg_match("/^\/roll\s+(\d+)/", $body['message']['text'], $matches);
     $dice = $matches[1];
     if ($dice) {
@@ -54,6 +56,7 @@ if (stripos($body['message']['text'], "/roll") === 0) {
     }
 }
 if (stripos($body['message']['text'], "/mycards") === 0) {
+    //displays my own cards in a private chat:
     if (!$pdo) {
         $message = "Sorry! It's no database connected. You have no cards.";
     } else {
@@ -82,6 +85,28 @@ if (stripos($body['message']['text'], "/mycards") === 0) {
             $directmessage = implode("\n", $cards);
         } else {
             $directmessage = "Bad karma! You have no cards.";
+        }
+    }
+}
+if (stripos($body['message']['text'], "/undrawcard") === 0) {
+    if (!$pdo) {
+        $message = "Sorry! It's no database connected.";
+    } else {
+        $statement = $pdo->prepare("
+            DELETE
+            FROM playercards
+            WHERE chat_id = :chat_id
+            ORDER BY mkdate DESC
+            LIMIT 1
+        ");
+        $statement->execute([
+            'chat_id' => $body['message']['chat']['id']
+        ]);
+        $success = $statement->rowCount();
+        if ($success) {
+            $message = "Alright, this is undone.";
+        } else {
+            $message = "There were no cards in play. Nothing to undraw.";
         }
     }
 }
