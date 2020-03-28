@@ -1,5 +1,13 @@
 <?php
 
+$pdo = false;
+$apikey = null;
+
+if (file_exists(__DIR__."/config.php")) {
+    include file_exists(__DIR__."/config.php");
+    //now we possibly have a $pdo object with a mysql database and a $apikey;
+}
+
 function roll($dice) {
     $output = [];
     $rolled = [];
@@ -21,7 +29,8 @@ function roll($dice) {
     return $output;
 }
 
-$message = null;
+$message       = null;
+$directmessage = null;
 
 $body = json_decode(file_get_contents("php://input"), true);
 if (!isset($body['message']['text'])) {
@@ -44,6 +53,38 @@ if (stripos($body['message']['text'], "/roll") === 0) {
         }
     }
 }
+if (stripos($body['message']['text'], "/mycards") === 0) {
+    if (!$pdo) {
+        $message = "Sorry! It's no database connected. You have no cards.";
+    } else {
+        $statement = $pdo->prepare("
+            SELECT cards.*, COUNT(*) AS number
+            FROM playercards
+                INNER JOIN cards ON (cards.card_id = playercards.card_id)
+            WHERE chat_id = :chat_id
+                AND player_id = :player_id
+            GROUP BY cards.card_id
+        ");
+        $statement->execute([
+            'chat_id' => $body['message']['chat']['id'],
+            'player_id' => $body['message']['user']['id']
+        ]);
+        $cards = [];
+        foreach ($statement->fetchAll(PDO::FETCH_ASSOC) as $card) {
+            $cardtext = "*";
+            if ($card['number'] > 1) {
+                $cardtext .= $card['number']." x ";
+            }
+            $cardtext .= $card['name']."*:".$card['description'];
+            $cards[] = $cardtext;
+        }
+        if (count($cards)) {
+            $directmessage = implode("\n", $cards);
+        } else {
+            $directmessage = "Bad karma! You have no cards.";
+        }
+    }
+}
 if ($message !== null) {
     $message = array(
         'method' => "sendMessage",
@@ -56,5 +97,24 @@ if ($message !== null) {
     header("Version: HTTP/1.1");
     header("Content-Type: application/json");
     echo $message;
+    die();
+}
+if ($directmessage !== null) {
+    $directmessage = array(
+        'chat_id' => "@channel".$body['message']['user']['username'],
+        'text' => $directmessage,
+        'parse_mode' => "Markdown"
+    );
+    $url = "https://api.telegram.org/bot".$apikey."/sendMessage";
+
+    $r = curl_init();
+    $header = ["Content-Type: application/json"];
+    curl_setopt($r, CURLOPT_URL, "https://api.telegram.org/bot".$apikey."/sendMessage");
+    curl_setopt($r, CURLOPT_POST, true);
+    curl_setopt($r, CURLOPT_HTTPHEADER, $header);
+    curl_setopt($r, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($r, CURLOPT_POSTFIELDS, json_encode($directmessage));
+
+    curl_exec($r);
     die();
 }
