@@ -38,6 +38,7 @@ if (!isset($body['message']['text'])) {
     $body = $_REQUEST;
 }
 if ($pdo && $body['message']['chat']['type'] === "private") {
+    //this is a private chat, save the id:
     $statement = $pdo->prepare("
         INSERT IGNORE INTO privatechats
         SET player_id = :player_id,
@@ -49,6 +50,7 @@ if ($pdo && $body['message']['chat']['type'] === "private") {
         'chat_id' => $body['message']['chat']['id'],
         'player_id' => $body['message']['from']['id']
     ]);
+    $message = "okay";
 }
 if (stripos($body['message']['text'], "/help") === 0) {
     //displays a help-message:
