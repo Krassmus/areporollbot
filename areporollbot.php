@@ -163,6 +163,49 @@ if (stripos($body['message']['text'], "/undrawcard") === 0) {
         }
     }
 }
+if (stripos($body['message']['text'], "/play") === 0) {
+    if (!$pdo) {
+        $message = "Sorry! It's no database connected.";
+    } else {
+        preg_match("/^\/play\s+(.+)/", $body['message']['text'], $matches);
+        $cardname = $matches[1];
+        if ($cardname) {
+            $statement = $pdo->prepare("
+                SELECT cards.*
+                FROM playercards
+                    INNER JOIN cards ON (cards.card_id = playercards.card_id)
+                WHERE playercards.chat_id = :chat_id
+                    AND playercards.player_id = :player_id
+                    AND cards.name = :cardname
+            ");
+            $statement->execute([
+                'cardname' => $cardname,
+                'player_id' => $body['message']['from']['id'],
+                'chat_id' => $body['message']['chat']['id']
+            ]);
+            $card = $statement->fetch(PDO::FETCH_ASSOC);
+            if (!$card) {
+                $message = "Sorry, ".$body['message']['from']['first_name'].", but you don't have this card. Maybe you type /mycards and look what you got?";
+            } else {
+                $message = $body['message']['from']['first_name']." plays ".$card['name']."\n";
+                $message .= $card['description'];
+
+                $statement = $pdo->prepare("
+                    DELETE FROM playercards
+                    WHERE chat_id = :chat_id
+                        AND player_id = :player_id
+                        AND card_id = :card_id
+                    LIMIT 1
+                ");
+                $statement->execute([
+                    'card_id' => $card['card_id'],
+                    'player_id' => $body['message']['from']['id'],
+                    'chat_id' => $body['message']['chat']['id']
+                ]);
+            }
+        }
+    }
+}
 
 //now send some messages:
 if ($directmessage !== null) {
