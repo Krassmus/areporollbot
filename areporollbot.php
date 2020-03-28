@@ -115,7 +115,7 @@ if (stripos($body['message']['text'], "/undrawcard") === 0) {
 //now send some messages:
 if ($directmessage !== null) {
     $directmessage = array(
-        'chat_id' => $body['message']['from']['username'],
+        'chat_id' => "@".$body['message']['from']['username'],
         'text' => $directmessage,
         'parse_mode' => "Markdown"
     );
@@ -126,13 +126,13 @@ if ($directmessage !== null) {
     curl_setopt($r, CURLOPT_URL, "https://api.telegram.org/bot".$apikey."/sendMessage");
     curl_setopt($r, CURLOPT_POST, true);
     curl_setopt($r, CURLOPT_HTTPHEADER, $header);
-    //curl_setopt($r, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($r, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($r, CURLOPT_POSTFIELDS, json_encode($directmessage));
     curl_setopt($r, CURLOPT_FAILONERROR, true);
-    $success = curl_exec($r);
+    $success = json_decode(curl_exec($r), true);
     $debug = json_encode($directmessage);
-    if (!$success) {
-        $message =  "cURL-error: ".curl_error($r);
+    if (!$success['ok']) {
+        $message =  $success['description'];
     }
 }
 if ($message !== null) {
