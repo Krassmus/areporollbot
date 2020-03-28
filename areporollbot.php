@@ -100,12 +100,12 @@ if (stripos($body['message']['text'], "/mycards") === 0) {
             $cardtext .= $card['name']."*:".$card['description'];
             $cards[] = $cardtext;
         }
-        var_dump($cards);
         if (count($cards)) {
             $directmessage = implode("\n", $cards);
         } else {
             $directmessage = "Bad karma! You have no cards.";
         }
+        var_dump($directmessage);
     }
 }
 if (stripos($body['message']['text'], "/drawcard") === 0) {
