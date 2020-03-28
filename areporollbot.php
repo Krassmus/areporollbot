@@ -93,11 +93,11 @@ if (stripos($body['message']['text'], "/mycards") === 0) {
         ]);
         $cards = [];
         foreach ($statement->fetchAll(PDO::FETCH_ASSOC) as $card) {
-            $cardtext = "*";
+            $cardtext = "";
             if ($card['number'] > 1) {
                 $cardtext .= $card['number']." x ";
             }
-            $cardtext .= $card['name']."*:".$card['description'];
+            $cardtext .= $card['name'].": ".$card['description'];
             $cards[] = $cardtext;
         }
         if (count($cards)) {
@@ -105,7 +105,6 @@ if (stripos($body['message']['text'], "/mycards") === 0) {
         } else {
             $directmessage = "Bad karma! You have no cards.";
         }
-        var_dump($directmessage);
     }
 }
 if (stripos($body['message']['text'], "/drawcard") === 0) {
