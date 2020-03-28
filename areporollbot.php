@@ -53,10 +53,13 @@ if ($pdo && $body['message']['chat']['type'] === "private") {
 }
 if (stripos($body['message']['text'], "/help") === 0) {
     //displays a help-message:
-    $message = "This is a bot for the roleplaying game Arepo. And these are my commands you can use:\n\n";
-    $message .= "*/help* : Get this info.\n\n";
-    $message .= "*/roll 4* : Roll 4 six-sided dice, each 1 erases itself and the highest other die, and after that only the three highest dice get added together. This is a result between 0 and 18.\n\n";
-    $message .= "*/mycards* : I will you write your cards in a private chat. But you need to start the private chat first by writing me a private message.";
+    $message = "This is a bot for the roleplaying game Arepo. And these are my commands you can use:\n";
+    $message .= "*/help* : Get this info.\n";
+    $message .= "*/roll 4* : Roll 4 six-sided dice, each 1 erases itself and the highest other die, and after that only the three highest dice get added together. This is a result between 0 and 18.\n";
+    if ($pdo) {
+        $message .= "*/mycards* : I will you write your cards in a private chat. But you need to start the private chat first by writing me a private message.\n";
+        $message .= "*/undrawcard* : Undo the last drawing of a card. Sometimes a player mistakenly drew a card. This can be undone by this command.\n";
+    }
 }
 if (stripos($body['message']['text'], "/roll") === 0) {
     //rolls dice in the arepo way:
@@ -102,6 +105,38 @@ if (stripos($body['message']['text'], "/mycards") === 0) {
         } else {
             $directmessage = "Bad karma! You have no cards.";
         }
+    }
+}
+if (stripos($body['message']['text'], "/drawcard") === 0) {
+    if (!$pdo) {
+        $message = "Sorry! It's no database connected.";
+    } else {
+        $purecards = $pdo->query("
+            SELECT * FROM cards
+        ")->fetchAll(PDO::FETCH_ASSOC);
+        $cards = [];
+        foreach ($purecards as $card) {
+            for ($i = 1; $i <= $card['times']; $i++) {
+                $cards[] = $card;
+            }
+        }
+        $rand = rand(0, count($cards) - 1);
+        $card = $cards[$rand];
+        $statement = $pdo->prepare("
+            INSERT INTO playercards
+            SET player_id = :player_id,
+                card_id = :card_id,
+                chat_id = :chat_id,
+                mkdate = UNIX_TIMESTAMP()
+        ");
+        $statement->execute([
+            'chat_id' => $body['message']['chat']['id'],
+            'player_id' => $body['message']['from']['id'],
+            'card_id' => $card['card_id']
+        ]);
+        $directmessage = "You just drew:\n";
+        $directmessage .= "*".$card['name']."* : ".$card['description']."\n\n";
+        $directmessage .= "In the group chat type */play ".$card['name']."* to reveal and play this card.";
     }
 }
 if (stripos($body['message']['text'], "/undrawcard") === 0) {
