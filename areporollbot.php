@@ -37,7 +37,7 @@ $body = json_decode(file_get_contents("php://input"), true);
 if (!isset($body['message']['text'])) {
     $body = $_REQUEST;
 }
-if ($pdo && $body['message']['chat']['type'] === "private") {
+if ($pdo && isset($body['message']['chat']['type']) && $body['message']['chat']['type'] === "private") {
     //this is a private chat, save the id:
     $statement = $pdo->prepare("
         INSERT IGNORE INTO privatechats
