@@ -138,7 +138,8 @@ if (stripos($body['message']['text'], "/mycards") === 0) {
             ]);
             $directmessage = "";
             foreach ($statement->fetchAll() as $chat) {
-                $directmessage .= "## ".($chat['title'] ?: "Untitled group").":\n";
+                $directmessage .= "".($chat['title'] ?: "Untitled group").":\n";
+                $directmessage .= "---------------\n";
                 $statement = $pdo->prepare("
                     SELECT cards.*, COUNT(*) AS number
                     FROM playercards
