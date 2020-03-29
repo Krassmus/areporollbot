@@ -80,14 +80,19 @@ if (stripos($body['message']['text'], "/help") === 0) {
 }
 if (stripos($body['message']['text'], "/roll") === 0) {
     //rolls dice in the arepo way:
-    preg_match("/^\/roll\s+(\d+)/", $body['message']['text'], $matches);
-    $dice = $matches[1];
-    if ($dice) {
-        $result = roll($dice);
-        if ($dice <= 1000) {
-            $message = $body['message']['from']['first_name'] . " rolled: \n" . implode(" + ", $result['rolled']) . " => *" . $result['result'] . "*";
-        } else {
-            $message = $body['message']['from']['first_name'] . " rolled: *" . $result['result'] . "*";
+    $rand = rand(1, 40);
+    if ($rand === 1) {
+        $message = "Oh, the dice carled under the couch.";
+    } else {
+        preg_match("/^\/roll\s+(\d+)/", $body['message']['text'], $matches);
+        $dice = $matches[1];
+        if ($dice) {
+            $result = roll($dice);
+            if ($dice <= 1000) {
+                $message = $body['message']['from']['first_name'] . " rolled: \n" . implode(" + ", $result['rolled']) . " => *" . $result['result'] . "*";
+            } else {
+                $message = $body['message']['from']['first_name'] . " rolled: *" . $result['result'] . "*";
+            }
         }
     }
 }
