@@ -280,6 +280,38 @@ if (stripos($body['message']['text'], "/play") === 0) {
         }
     }
 }
+if (stripos($body['message']['text'], "/simulate") === 0) {
+    preg_match("/^\/simulate\s+(\d+)\s+\w*\s(\d*)/", $body['message']['text'], $matches);
+    $dice_a = $matches[1];
+    $dice_b = $matches[2];
+    $rounds = 10000;
+    if ($dice_b) {
+        $wins_a = 0;
+        $wins_b = 0;
+        for ($i = 0; $i < $rounds; $i++) {
+            $result_a = roll($dice_a);
+            $result_b = roll($dice_b);
+            if ($result_a > $result_b) {
+                $wins_a++;
+            }
+            if ($result_a < $result_b) {
+                $wins_b++;
+            }
+        }
+        $message = "Player A wins: ".round($wins_a / $rounds * 100, 2)."%\n";
+        $message .= "Player B wins: ".round($wins_b / $rounds * 100, 2)."%";
+    } else {
+        $results = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];// 0 - 18
+        for ($i = 0; $i < $rounds; $i++) {
+            $result = roll($dice_a);
+            $results[$result]++;
+        }
+        $message = "Propabilities:\n";
+        foreach ($results as $res => $rolled) {
+            $message .= $res.": ".round($rolled / $rounds * 100, 2)."%\n";
+        }
+    }
+}
 
 //now send some messages:
 if ($directmessage !== null) {
