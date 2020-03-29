@@ -82,7 +82,7 @@ if (stripos($body['message']['text'], "/roll") === 0) {
     //rolls dice in the arepo way:
     $rand = rand(1, 40);
     if ($rand === 1) {
-        $message = "Oh, the dice carled under the couch.";
+        $message = "Oh, ".$body['message']['from']['first_name']." carled the dice under the couch.";
     } else {
         preg_match("/^\/roll\s+(\d+)/", $body['message']['text'], $matches);
         $dice = $matches[1];
