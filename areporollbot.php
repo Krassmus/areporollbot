@@ -73,9 +73,10 @@ if (stripos($body['message']['text'], "/help") === 0) {
     if ($pdo) {
         $message .= "*/mycards* : I will you write your cards in a private chat. But you need to start the private chat first by writing me a private message.\n";
         $message .= "*/drawcard* : Draw a card. I will write you which card you got in a private channel. Please write me first.\n";
-        $message .= "*/undrawcard* : Undo the last drawing of a card. Sometimes a player mistakenly drew a card. This can be undone by this command.\n";
-        $message .= "*/playcard CardName* : If you own this card, you can play this card in the group chat, reveal it to all others.\n";
+        $message .= "*/undrawcard* : Undo the last drawing of a card. Sometimes a player drew a card by mistake. This can be undone by this command.\n";
+        $message .= "*/playcard CardName* : If you own this card, you can play it in the group chat.\n";
     }
+    $message .= "*/simulate* : /simulate 4 would roll thousand of times 4 dice and calculate the propabilities for each result from 0 - 18. Or by /simulate 4 versus 5 you get the probabilities that 4 dice would win against 5 dice.\n";
 }
 if (stripos($body['message']['text'], "/roll") === 0) {
     //rolls dice in the arepo way:
