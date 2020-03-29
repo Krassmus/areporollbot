@@ -119,7 +119,7 @@ if (stripos($body['message']['text'], "/mycards") === 0) {
                 $cards[] = $cardtext;
             }
             if (count($cards)) {
-                $directmessage = "Your cards in *".$body['message']['chat']['title']."*:\n";
+                $directmessage = "*Your cards in ".$body['message']['chat']['title']."*:\n";
                 $directmessage .= implode("\n", $cards);
             } else {
                 $directmessage = "Bad karma! You have no cards in *".$body['message']['chat']['title']."*.";
@@ -138,8 +138,7 @@ if (stripos($body['message']['text'], "/mycards") === 0) {
             ]);
             $message = "";
             foreach ($statement->fetchAll() as $chat) {
-                $message .= "".($chat['title'] ?: "Untitled group").":\n";
-                $message .= "---------------\n";
+                $message .= "*".($chat['title'] ?: "Untitled group")."*\n";
                 $statement = $pdo->prepare("
                     SELECT cards.*, COUNT(*) AS number
                     FROM playercards
@@ -162,7 +161,7 @@ if (stripos($body['message']['text'], "/mycards") === 0) {
                     $cardtext .= $card['name']."*: ".$card['description'];
                     $cards[] = $cardtext;
                 }
-                $message .= implode("\n", $cards)."\n";
+                $message .= implode("\n", $cards)."\n\n";
             }
             if (!$message) {
                 $message = "Bad karma! You have no cards.";
