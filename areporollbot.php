@@ -291,10 +291,10 @@ if (stripos($body['message']['text'], "/simulate") === 0) {
         for ($i = 0; $i < $rounds; $i++) {
             $result_a = roll($dice_a);
             $result_b = roll($dice_b);
-            if ($result_a > $result_b) {
+            if ($result_a['result'] > $result_b['result']) {
                 $wins_a++;
             }
-            if ($result_a < $result_b) {
+            if ($result_a['result'] < $result_b['result']) {
                 $wins_b++;
             }
         }
@@ -306,7 +306,7 @@ if (stripos($body['message']['text'], "/simulate") === 0) {
             $result = roll($dice_a);
             $results[$result['result']]++;
         }
-        $message = "Propabilities:\n";
+        $message = "Propabilities for ".$dice_a." rolled dice:\n";
         foreach ($results as $res => $rolled) {
             $message .= $res.": ".round($rolled / $rounds * 100, 2)."%\n";
         }
