@@ -136,10 +136,10 @@ if (stripos($body['message']['text'], "/mycards") === 0) {
             $statement->execute([
                 'player_id' => $body['message']['from']['id']
             ]);
-            $directmessage = "";
+            $message = "";
             foreach ($statement->fetchAll() as $chat) {
-                $directmessage .= "".($chat['title'] ?: "Untitled group").":\n";
-                $directmessage .= "---------------\n";
+                $message .= "".($chat['title'] ?: "Untitled group").":\n";
+                $message .= "---------------\n";
                 $statement = $pdo->prepare("
                     SELECT cards.*, COUNT(*) AS number
                     FROM playercards
@@ -162,7 +162,10 @@ if (stripos($body['message']['text'], "/mycards") === 0) {
                     $cardtext .= $card['name']."*: ".$card['description'];
                     $cards[] = $cardtext;
                 }
-                $directmessage .= implode("\n", $cards)."\n";
+                $message .= implode("\n", $cards)."\n";
+            }
+            if (!$message) {
+                $message = "Bad karma! You have no cards.";
             }
         }
     }
