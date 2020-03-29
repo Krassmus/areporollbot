@@ -197,7 +197,7 @@ if (stripos($body['message']['text'], "/drawcard") === 0) {
                 'player_id' => $body['message']['from']['id'],
                 'card_id' => $card['card_id']
             ]);
-            $directmessage = "You just drew:\n";
+            $directmessage = "You just drew:\n\n";
             $directmessage .= "*".$card['name']."* : ".$card['description']."\n\n";
             $directmessage .= "In the group chat type */play ".$card['name']."* to reveal and play this card.";
 
@@ -281,9 +281,9 @@ if (stripos($body['message']['text'], "/play") === 0) {
     }
 }
 if (stripos($body['message']['text'], "/simulate") === 0) {
-    preg_match("/^\/simulate\s+(\d+)\s+\w*\s(\d*)/", $body['message']['text'], $matches);
+    preg_match("/^\/simulate\s+(\d+)(\s+\w+)?(\s+(\d+))?/", $body['message']['text'], $matches);
     $dice_a = $matches[1];
-    $dice_b = $matches[2];
+    $dice_b = $matches[4];
     $rounds = 10000;
     if ($dice_b) {
         $wins_a = 0;
@@ -304,7 +304,7 @@ if (stripos($body['message']['text'], "/simulate") === 0) {
         $results = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];// 0 - 18
         for ($i = 0; $i < $rounds; $i++) {
             $result = roll($dice_a);
-            $results[$result]++;
+            $results[$result['result']]++;
         }
         $message = "Propabilities:\n";
         foreach ($results as $res => $rolled) {
