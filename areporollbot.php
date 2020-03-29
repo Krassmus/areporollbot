@@ -51,6 +51,20 @@ if ($pdo && isset($body['message']['chat']['type']) && $body['message']['chat'][
         'player_id' => $body['message']['from']['id']
     ]);
 }
+if ($pdo && isset($body['message']['chat']['type']) && $body['message']['chat']['type'] === "group") {
+    //this is a group chat, save the title/name:
+    $statement = $pdo->prepare("
+        INSERT IGNORE INTO groupchats
+        SET chat_id = :chat_id,
+            title = :title
+        ON DUPLICATE KEY UPDATE
+            title = :title
+    ");
+    $statement->execute([
+        'chat_id' => $body['message']['chat']['id'],
+        'title' => $body['message']['chat']['title']
+    ]);
+}
 if (stripos($body['message']['text'], "/help") === 0) {
     //displays a help-message:
     $message = "This is a bot for the roleplaying game Arepo. And these are my commands you can use:\n";
@@ -58,7 +72,9 @@ if (stripos($body['message']['text'], "/help") === 0) {
     $message .= "*/roll 4* : Roll 4 six-sided dice, each 1 erases itself and the highest other die, and after that only the three highest dice get added together. This is a result between 0 and 18.\n";
     if ($pdo) {
         $message .= "*/mycards* : I will you write your cards in a private chat. But you need to start the private chat first by writing me a private message.\n";
+        $message .= "*/drawcard* : Draw a card. I will write you which card you got in a private channel. Please write me first.\n";
         $message .= "*/undrawcard* : Undo the last drawing of a card. Sometimes a player mistakenly drew a card. This can be undone by this command.\n";
+        $message .= "*/playcard CardName* : If you own this card, you can play this card in the group chat, reveal it to all others.\n";
     }
 }
 if (stripos($body['message']['text'], "/roll") === 0) {
@@ -79,31 +95,74 @@ if (stripos($body['message']['text'], "/mycards") === 0) {
     if (!$pdo) {
         $message = "Sorry! It's no database connected. You have no cards.";
     } else {
-        $statement = $pdo->prepare("
-            SELECT cards.*, COUNT(*) AS number
-            FROM playercards
-                INNER JOIN cards ON (cards.card_id = playercards.card_id)
-            WHERE chat_id = :chat_id
-                AND player_id = :player_id
-            GROUP BY cards.card_id
-        ");
-        $statement->execute([
-            'chat_id' => $body['message']['chat']['id'],
-            'player_id' => $body['message']['from']['id']
-        ]);
-        $cards = [];
-        foreach ($statement->fetchAll(PDO::FETCH_ASSOC) as $card) {
-            $cardtext = "*";
-            if ($card['number'] > 1) {
-                $cardtext .= $card['number']." x ";
+        if ($body['message']['chat']['type'] === "group") {
+            $statement = $pdo->prepare("
+                SELECT cards.*, COUNT(*) AS number
+                FROM playercards
+                    INNER JOIN cards ON (cards.card_id = playercards.card_id)
+                WHERE chat_id = :chat_id
+                    AND player_id = :player_id
+                GROUP BY cards.card_id
+                ORDER BY cards.name ASC
+            ");
+            $statement->execute([
+                'chat_id' => $body['message']['chat']['id'],
+                'player_id' => $body['message']['from']['id']
+            ]);
+            $cards = [];
+            foreach ($statement->fetchAll(PDO::FETCH_ASSOC) as $card) {
+                $cardtext = "*";
+                if ($card['number'] > 1) {
+                    $cardtext .= $card['number']." x ";
+                }
+                $cardtext .= $card['name']."*: ".$card['description'];
+                $cards[] = $cardtext;
             }
-            $cardtext .= $card['name']."*: ".$card['description'];
-            $cards[] = $cardtext;
-        }
-        if (count($cards)) {
-            $directmessage = implode("\n", $cards);
+            if (count($cards)) {
+                $directmessage = "Your cards in *".$body['message']['chat']['title']."*:\n";
+                $directmessage .= implode("\n", $cards);
+            } else {
+                $directmessage = "Bad karma! You have no cards in *".$body['message']['chat']['title']."*.";
+            }
         } else {
-            $directmessage = "Bad karma! You have no cards.";
+            $statement = $pdo->prepare("
+                SELECT playercards.chat_id, groupchats.title
+                FROM playercards
+                    LEFT JOIN groupchats ON (groupchats.chat_id = playercards.chat_id)
+                WHERE playercards.player_id = :player_id
+                GROUP BY playercards.chat_id
+                ORDER BY MAX(playercards.mkdate) DESC
+            ");
+            $statement->execute([
+                'player_id' => $body['message']['from']['id']
+            ]);
+            $directmessage = "";
+            foreach ($statement->fetchAll() as $chat) {
+                $directmessage .= "## ".($chat['title'] ?: "Untitled group").":\n"
+                $statement = $pdo->prepare("
+                    SELECT cards.*, COUNT(*) AS number
+                    FROM playercards
+                        INNER JOIN cards ON (cards.card_id = playercards.card_id)
+                    WHERE chat_id = :chat_id
+                        AND player_id = :player_id
+                    GROUP BY cards.card_id
+                    ORDER BY cards.name ASC
+                ");
+                $statement->execute([
+                    'chat_id' => $chat['chat_id'],
+                    'player_id' => $body['message']['from']['id']
+                ]);
+                $cards = [];
+                foreach ($statement->fetchAll(PDO::FETCH_ASSOC) as $card) {
+                    $cardtext = "*";
+                    if ($card['number'] > 1) {
+                        $cardtext .= $card['number']." x ";
+                    }
+                    $cardtext .= $card['name']."*: ".$card['description'];
+                    $cards[] = $cardtext;
+                }
+                $directmessage .= implode("\n", $cards)."\n";
+            }
         }
     }
 }
@@ -111,55 +170,63 @@ if (stripos($body['message']['text'], "/drawcard") === 0) {
     if (!$pdo) {
         $message = "Sorry! It's no database connected.";
     } else {
-        $purecards = $pdo->query("
-            SELECT * FROM cards
-        ")->fetchAll(PDO::FETCH_ASSOC);
-        $cards = [];
-        foreach ($purecards as $card) {
-            for ($i = 1; $i <= $card['times']; $i++) {
-                $cards[] = $card;
+        if ($body['message']['chat']['type'] === "group") {
+            $purecards = $pdo->query("
+                SELECT * FROM cards
+            ")->fetchAll(PDO::FETCH_ASSOC);
+            $cards = [];
+            foreach ($purecards as $card) {
+                for ($i = 1; $i <= $card['times']; $i++) {
+                    $cards[] = $card;
+                }
             }
-        }
-        $rand = rand(0, count($cards) - 1);
-        $card = $cards[$rand];
-        $statement = $pdo->prepare("
-            INSERT INTO playercards
-            SET player_id = :player_id,
-                card_id = :card_id,
-                chat_id = :chat_id,
-                mkdate = UNIX_TIMESTAMP()
-        ");
-        $statement->execute([
-            'chat_id' => $body['message']['chat']['id'],
-            'player_id' => $body['message']['from']['id'],
-            'card_id' => $card['card_id']
-        ]);
-        $directmessage = "You just drew:\n";
-        $directmessage .= "*".$card['name']."* : ".$card['description']."\n\n";
-        $directmessage .= "In the group chat type */play ".$card['name']."* to reveal and play this card.";
+            $rand = rand(0, count($cards) - 1);
+            $card = $cards[$rand];
+            $statement = $pdo->prepare("
+                INSERT INTO playercards
+                SET player_id = :player_id,
+                    card_id = :card_id,
+                    chat_id = :chat_id,
+                    mkdate = UNIX_TIMESTAMP()
+            ");
+            $statement->execute([
+                'chat_id' => $body['message']['chat']['id'],
+                'player_id' => $body['message']['from']['id'],
+                'card_id' => $card['card_id']
+            ]);
+            $directmessage = "You just drew:\n";
+            $directmessage .= "*".$card['name']."* : ".$card['description']."\n\n";
+            $directmessage .= "In the group chat type */play ".$card['name']."* to reveal and play this card.";
 
-        $message = $body['message']['from']['first_name'] . " draws a card.";
+            $message = $body['message']['from']['first_name'] . " draws a card.";
+        } else {
+            $message = "You can only draw cards in a group chat.";
+        }
     }
 }
 if (stripos($body['message']['text'], "/undrawcard") === 0) {
     if (!$pdo) {
         $message = "Sorry! It's no database connected.";
     } else {
-        $statement = $pdo->prepare("
-            DELETE
-            FROM playercards
-            WHERE chat_id = :chat_id
-            ORDER BY mkdate DESC
-            LIMIT 1
-        ");
-        $statement->execute([
-            'chat_id' => $body['message']['chat']['id']
-        ]);
-        $success = $statement->rowCount();
-        if ($success) {
-            $message = "Alright, this is undone.";
+        if ($body['message']['chat']['type'] === "group") {
+            $statement = $pdo->prepare("
+                DELETE
+                FROM playercards
+                WHERE chat_id = :chat_id
+                ORDER BY mkdate DESC
+                LIMIT 1
+            ");
+            $statement->execute([
+                'chat_id' => $body['message']['chat']['id']
+            ]);
+            $success = $statement->rowCount();
+            if ($success) {
+                $message = "Alright, this is undone.";
+            } else {
+                $message = "There were no cards in play. Nothing to undraw.";
+            }
         } else {
-            $message = "There were no cards in play. Nothing to undraw.";
+            $message = "This command is only available in group chats.";
         }
     }
 }
@@ -167,42 +234,46 @@ if (stripos($body['message']['text'], "/play") === 0) {
     if (!$pdo) {
         $message = "Sorry! It's no database connected.";
     } else {
-        preg_match("/^\/play\s+(.+)/", $body['message']['text'], $matches);
-        $cardname = $matches[1];
-        if ($cardname) {
-            $statement = $pdo->prepare("
-                SELECT cards.*
-                FROM playercards
-                    INNER JOIN cards ON (cards.card_id = playercards.card_id)
-                WHERE playercards.chat_id = :chat_id
-                    AND playercards.player_id = :player_id
-                    AND cards.name = :cardname
-            ");
-            $statement->execute([
-                'cardname' => $cardname,
-                'player_id' => $body['message']['from']['id'],
-                'chat_id' => $body['message']['chat']['id']
-            ]);
-            $card = $statement->fetch(PDO::FETCH_ASSOC);
-            if (!$card) {
-                $message = "Sorry, ".$body['message']['from']['first_name'].", but you don't have this card. Maybe you type /mycards and look what you got?";
-            } else {
-                $message = $body['message']['from']['first_name']." plays ".$card['name']."\n";
-                $message .= $card['description'];
-
+        if ($body['message']['chat']['type'] === "group") {
+            preg_match("/^\/play\s+(.+)/", $body['message']['text'], $matches);
+            $cardname = $matches[1];
+            if ($cardname) {
                 $statement = $pdo->prepare("
-                    DELETE FROM playercards
-                    WHERE chat_id = :chat_id
-                        AND player_id = :player_id
-                        AND card_id = :card_id
-                    LIMIT 1
+                    SELECT cards.*
+                    FROM playercards
+                        INNER JOIN cards ON (cards.card_id = playercards.card_id)
+                    WHERE playercards.chat_id = :chat_id
+                        AND playercards.player_id = :player_id
+                        AND cards.name = :cardname
                 ");
                 $statement->execute([
-                    'card_id' => $card['card_id'],
+                    'cardname' => $cardname,
                     'player_id' => $body['message']['from']['id'],
                     'chat_id' => $body['message']['chat']['id']
                 ]);
+                $card = $statement->fetch(PDO::FETCH_ASSOC);
+                if (!$card) {
+                    $message = "Sorry, ".$body['message']['from']['first_name'].", but you don't have that card. Maybe you type /mycards and look what you got?";
+                } else {
+                    $message = $body['message']['from']['first_name']." plays *".$card['name']."*:\n";
+                    $message .= $card['description'];
+
+                    $statement = $pdo->prepare("
+                        DELETE FROM playercards
+                        WHERE chat_id = :chat_id
+                            AND player_id = :player_id
+                            AND card_id = :card_id
+                        LIMIT 1
+                    ");
+                    $statement->execute([
+                        'card_id' => $card['card_id'],
+                        'player_id' => $body['message']['from']['id'],
+                        'chat_id' => $body['message']['chat']['id']
+                    ]);
+                }
             }
+        } else {
+            $message = "You can only play cards in a group chat and only if you have some.";
         }
     }
 }
