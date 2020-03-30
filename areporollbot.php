@@ -321,12 +321,7 @@ if (stripos($body['message']['text'], "/play") === 0) {
                 if (count($cards)) {
                     $message = "@".$body['message']['from']['username']." , what card do you want to play?";
                     $reply_markup = [
-                        'keyboard' => [
-                            ["/roll 3", "/roll 4", "/roll 5"],
-                            ["/roll 6", "/roll 7", "/roll 8"],
-                            ["/roll 9", "/roll 10", "/roll 11"],
-                            ["/roll 12", "/roll 13", "/roll 14"]
-                        ],
+                        'keyboard' => [],
                         'resize_keyboard' => true,
                         'one_time_keyboard' => true,
                         'selective' => true
