@@ -32,6 +32,7 @@ function roll($dice) {
 
 $message       = null;
 $directmessage = null;
+$reply_markup  = null;
 
 $body = json_decode(file_get_contents("php://input"), true);
 if (!isset($body['message']['text'])) {
@@ -80,13 +81,13 @@ if (stripos($body['message']['text'], "/help") === 0) {
 }
 if (stripos($body['message']['text'], "/roll") === 0) {
     //rolls dice in the arepo way:
-    $rand = rand(1, 40);
-    if ($rand === 1) {
-        $message = "Oh, ".$body['message']['from']['first_name']." carled the dice under the couch.";
-    } else {
-        preg_match("/^\/roll\s+(\d+)/", $body['message']['text'], $matches);
-        $dice = $matches[1];
-        if ($dice) {
+    preg_match("/^\/roll\s+(\d+)/", $body['message']['text'], $matches);
+    $dice = $matches[1];
+    if ($dice) {
+        $rand = rand(1, 40);
+        if ($rand === 1) {
+            $message = "Oh, ".$body['message']['from']['first_name']." carled the dice under the couch.";
+        } else {
             $result = roll($dice);
             if ($dice <= 1000) {
                 $message = $body['message']['from']['first_name'] . " rolled: \n" . implode(" + ", $result['rolled']) . " => *" . $result['result'] . "*";
@@ -94,6 +95,20 @@ if (stripos($body['message']['text'], "/roll") === 0) {
                 $message = $body['message']['from']['first_name'] . " rolled: *" . $result['result'] . "*";
             }
         }
+    } else {
+        //display inline keyboard
+        $message = "@".$body['message']['from']['username']." , how many dice should I roll?";
+        $reply_markup = [
+            'keyboard' => [
+                ["/roll 3", "/roll 4", "/roll 5"],
+                ["/roll 6", "/roll 7", "/roll 8"],
+                ["/roll 9", "/roll 10", "/roll 11"],
+                ["/roll 12", "/roll 13", "/roll 14"]
+            ],
+            'resize_keyboard' => true,
+            'one_time_keyboard' => true,
+            'selective' => true
+        ];
     }
 }
 if (stripos($body['message']['text'], "/mycards") === 0) {
@@ -363,6 +378,9 @@ if ($message !== null) {
         'text' => $message,
         'parse_mode' => "Markdown"
     );
+    if ($reply_markup !== null) {
+        $message['reply_markup'] = $reply_markup;
+    }
     $message = json_encode($message);
     header("Status-Code: 200");
     header("Version: HTTP/1.1");
