@@ -94,6 +94,9 @@ if (stripos($body['message']['text'], "/roll") === 0) {
             } else {
                 $message = $body['message']['from']['first_name'] . " rolled: *" . $result['result'] . "*";
             }
+            $reply_markup = [
+                'remove_keyboard' => true
+            ];
         }
     } else {
         //display inline keyboard
