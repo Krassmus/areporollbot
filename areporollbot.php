@@ -318,10 +318,6 @@ if (stripos($body['message']['text'], "/play") === 0) {
                     'player_id' => $body['message']['from']['id']
                 ]);
                 $cards = $statement->fetchAll(PDO::FETCH_ASSOC);
-                var_dump($body['message']['chat']['id']);
-                var_dump($body['message']['from']['id']);
-                var_dump($cards);
-                die();
                 if (count($cards)) {
                     $message = "@".$body['message']['from']['username']." , what card do you want to play?";
                     $reply_markup = [
