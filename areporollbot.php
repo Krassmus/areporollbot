@@ -298,6 +298,51 @@ if (stripos($body['message']['text'], "/play") === 0) {
                         'chat_id' => $body['message']['chat']['id']
                     ]);
                 }
+                $reply_markup = [
+                    'remove_keyboard' => true
+                ];
+            } else {
+                //ask for cardname
+                //display inline keyboard
+                $statement = $pdo->prepare("
+                    SELECT cards.*, COUNT(*) AS number
+                    FROM playercards
+                        INNER JOIN cards ON (cards.card_id = playercards.card_id)
+                    WHERE chat_id = :chat_id
+                        AND player_id = :player_id
+                    GROUP BY cards.card_id
+                    ORDER BY cards.name ASC
+                ");
+                $statement->execute([
+                    'chat_id' => $body['message']['chat']['id'],
+                    'player_id' => $body['message']['from']['id']
+                ]);
+                $cards = $statement->fetchAll(PDO::FETCH_ASSOC);
+                if (count($cards)) {
+                    $message = "@".$body['message']['from']['username']." , what card do you want to play?";
+                    $reply_markup = [
+                        'keyboard' => [
+                            ["/roll 3", "/roll 4", "/roll 5"],
+                            ["/roll 6", "/roll 7", "/roll 8"],
+                            ["/roll 9", "/roll 10", "/roll 11"],
+                            ["/roll 12", "/roll 13", "/roll 14"]
+                        ],
+                        'resize_keyboard' => true,
+                        'one_time_keyboard' => true,
+                        'selective' => true
+                    ];
+                    while (count($cards)) {
+                        $i = count($reply_markup['keyboard']);
+                        if ($i === 0 || count($reply_markup['keyboard'][$i]) === 3) {
+                            $reply_markup['keyboard'][] = [];
+                            $i++;
+                        }
+                        $reply_markup['keyboard'][$i][] = "/play ".$card['name'];
+                    }
+                } else {
+                    $message = "Sorry, ".$body['message']['from']['first_name']." , you have no cards to play.";
+                }
+
             }
         } else {
             $message = "You can only play cards in a group chat and only if you have some.";
