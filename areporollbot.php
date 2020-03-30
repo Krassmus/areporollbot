@@ -328,12 +328,12 @@ if (stripos($body['message']['text'], "/play") === 0) {
                     ];
                     while (count($cards)) {
                         $i = count($reply_markup['keyboard']);
-                        if ($i === 0 || count($reply_markup['keyboard'][$i]) === 3) {
+                        if ($i === 0 || count($reply_markup['keyboard'][$i - 1]) === 2) {
                             $reply_markup['keyboard'][] = [];
                             $i++;
                         }
                         $card = array_shift($cards);
-                        $reply_markup['keyboard'][$i][] = "/play ".$card['name'];
+                        $reply_markup['keyboard'][$i - 1][] = "/play ".$card['name'];
                     }
                 } else {
                     $message = "Sorry, ".$body['message']['from']['first_name']." , you have no cards to play.";
