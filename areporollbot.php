@@ -319,7 +319,7 @@ if (stripos($body['message']['text'], "/play") === 0) {
                 ]);
                 $cards = $statement->fetchAll(PDO::FETCH_ASSOC);
                 if (count($cards)) {
-                    $message = "@".$body['message']['from']['username']." , what card do you want to play?";
+                    $message = "@".$body['message']['from']['username']." , what card do you want to play? (Type /mycards if you're unsure.)";
                     $reply_markup = [
                         'keyboard' => [],
                         'resize_keyboard' => true,
