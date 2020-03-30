@@ -52,7 +52,7 @@ if ($pdo && isset($body['message']['chat']['type']) && $body['message']['chat'][
         'player_id' => $body['message']['from']['id']
     ]);
 }
-if ($pdo && isset($body['message']['chat']['type']) && $body['message']['chat']['type'] === "group") {
+if ($pdo && isset($body['message']['chat']['type']) && $body['message']['chat']['type'] !== "private") {
     //this is a group chat, save the title/name:
     $statement = $pdo->prepare("
         INSERT IGNORE INTO groupchats
@@ -119,7 +119,7 @@ if (stripos($body['message']['text'], "/mycards") === 0) {
     if (!$pdo) {
         $message = "Sorry! It's no database connected. You have no cards.";
     } else {
-        if ($body['message']['chat']['type'] === "group") {
+        if ($body['message']['chat']['type'] !== "private") {
             $statement = $pdo->prepare("
                 SELECT cards.*, COUNT(*) AS number
                 FROM playercards
@@ -197,7 +197,7 @@ if (stripos($body['message']['text'], "/drawcard") === 0) {
     if (!$pdo) {
         $message = "Sorry! It's no database connected.";
     } else {
-        if ($body['message']['chat']['type'] === "group") {
+        if ($body['message']['chat']['type'] !== "private") {
             $purecards = $pdo->query("
                 SELECT * FROM cards
             ")->fetchAll(PDO::FETCH_ASSOC);
@@ -235,7 +235,7 @@ if (stripos($body['message']['text'], "/undrawcard") === 0) {
     if (!$pdo) {
         $message = "Sorry! It's no database connected.";
     } else {
-        if ($body['message']['chat']['type'] === "group") {
+        if ($body['message']['chat']['type'] !== "private") {
             $statement = $pdo->prepare("
                 DELETE
                 FROM playercards
@@ -261,9 +261,9 @@ if (stripos($body['message']['text'], "/play") === 0) {
     if (!$pdo) {
         $message = "Sorry! It's no database connected.";
     } else {
-        if ($body['message']['chat']['type'] === "group") {
-            preg_match("/^\/play\s+(.+)/", $body['message']['text'], $matches);
-            $cardname = $matches[1];
+        if ($body['message']['chat']['type'] !== "private") {
+            preg_match("/^\/play(card)?\s+(.+)/", $body['message']['text'], $matches);
+            $cardname = $matches[2];
             if ($cardname) {
                 $statement = $pdo->prepare("
                     SELECT cards.*
@@ -318,6 +318,10 @@ if (stripos($body['message']['text'], "/play") === 0) {
                     'player_id' => $body['message']['from']['id']
                 ]);
                 $cards = $statement->fetchAll(PDO::FETCH_ASSOC);
+                var_dump($body['message']['chat']['id']);
+                var_dump($body['message']['from']['id']);
+                var_dump($cards);
+                die();
                 if (count($cards)) {
                     $message = "@".$body['message']['from']['username']." , what card do you want to play?";
                     $reply_markup = [
