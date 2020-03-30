@@ -332,6 +332,7 @@ if (stripos($body['message']['text'], "/play") === 0) {
                             $reply_markup['keyboard'][] = [];
                             $i++;
                         }
+                        $card = array_shift($cards);
                         $reply_markup['keyboard'][$i][] = "/play ".$card['name'];
                     }
                 } else {
