@@ -100,7 +100,7 @@ if (stripos($body['message']['text'], "/roll") === 0) {
         }
     } else {
         //display inline keyboard
-        $message = "@".$body['message']['from']['username']." , how many dice should I roll?";
+        $message = "[".$body['message']['from']['first_name']."](tg://user?id=".$body['message']['from']['id'].") , how many dice should I roll?";
         $reply_markup = [
             'keyboard' => [
                 ["/roll 3", "/roll 4", "/roll 5"],
@@ -319,7 +319,7 @@ if (stripos($body['message']['text'], "/play") === 0) {
                 ]);
                 $cards = $statement->fetchAll(PDO::FETCH_ASSOC);
                 if (count($cards)) {
-                    $message = "@".$body['message']['from']['username']." , what card do you want to play? (Type /mycards if you're unsure.)";
+                    $message = "[".$body['message']['from']['first_name']."](tg://user?id=".$body['message']['from']['id']."), what card do you want to play? (Type /mycards if you're unsure.)";
                     $reply_markup = [
                         'keyboard' => [],
                         'resize_keyboard' => true,
