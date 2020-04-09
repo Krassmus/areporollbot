@@ -100,7 +100,7 @@ if (stripos($body['message']['text'], "/roll") === 0) {
         }
     } else {
         //display inline keyboard
-        $message = "[".$body['message']['from']['first_name']."](tg://user?id=".$body['message']['from']['id'].") , how many dice should I roll?";
+        $message = "[".$body['message']['from']['first_name']."](tg://user?id=".$body['message']['from']['id']."), how many dice should I roll?";
         $reply_markup = [
             'keyboard' => [
                 ["/roll 3", "/roll 4", "/roll 5"],
