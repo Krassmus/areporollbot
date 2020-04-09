@@ -425,14 +425,32 @@ if ($message !== null) {
     if ($reply_markup !== null) {
         $message['reply_markup'] = $reply_markup;
     }
-    $message = json_encode($message);
     header("Status-Code: 200");
     header("Version: HTTP/1.1");
     header("Content-Type: application/json");
-    echo $message;
+    echo json_encode($message);
 }
 if ($debug !== null) {
     file_put_contents(__DIR__."/debuglast.txt", $debug);
 } else {
     @unlink(__DIR__."/debuglast.txt");
+}
+
+if ($pdo) {
+    $statement = $pdo->prepare("
+        INSERT INTO requestlogs
+        SET incoming = :incoming,
+            message = :message,
+            directmessage = :directmessage,
+            mkdate = UNIX_TIMESTAMP()
+    ");
+    $statement->execute([
+        'incoming' => json_encode($body),
+        'message' => json_encode($message),
+        'directmessage' => json_encode($directmessage)
+    ]);
+    $pdo->exec("
+        DELETE FROM requestlogs
+        WHERE mkdate < UNIX_TIMESTAMP() - 86400 * 30
+    ");
 }
