@@ -6,7 +6,7 @@ $debug = null;
 
 if (file_exists(__DIR__."/config.php")) {
     include __DIR__."/config.php";
-    //now we possibly have a $pdo object with a mysql database and a $apikey;
+    //now we possibly have a $pdo object with a mysql database and an $apikey;
 }
 
 function roll($dice) {
@@ -50,6 +50,32 @@ if ($pdo && isset($body['message']['chat']['type']) && $body['message']['chat'][
     $statement->execute([
         'chat_id' => $body['message']['chat']['id'],
         'player_id' => $body['message']['from']['id']
+    ]);
+}
+if ($pdo && isset($body['message']['from'])) {
+    //save user data if available:
+    $statement = $pdo->prepare("
+        INSERT IGNORE INTO players
+        SET id = :id,
+            first_name = :first_name,
+            last_name = :last_name,
+            username = :username,
+            is_bot = :is_bot,
+            language_code = :language_code
+        ON DUPLICATE KEY UPDATE
+            first_name = :first_name,
+            last_name = :last_name,
+            username = :username,
+            is_bot = :is_bot,
+            language_code = :language_code
+    ");
+    $statement->execute([
+        'id' => $body['message']['from']['id'],
+        'first_name' => $body['message']['from']['first_name'],
+        'last_name' => $body['message']['from']['last_name'],
+        'username' => $body['message']['from']['username'],
+        'is_bot' => $body['message']['from']['is_bot'],
+        'language_code' => $body['message']['from']['language_code']
     ]);
 }
 if ($pdo && isset($body['message']['chat']['type']) && $body['message']['chat']['type'] !== "private") {
