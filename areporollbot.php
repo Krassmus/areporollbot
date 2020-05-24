@@ -33,6 +33,7 @@ function roll($dice) {
 $message       = null;
 $directmessage = null;
 $reply_markup  = null;
+$command       = null;
 
 $body = json_decode(file_get_contents("php://input"), true);
 if (!isset($body['message']['text'])) {
@@ -78,6 +79,13 @@ if ($pdo && isset($body['message']['from'])) {
         'language_code' => $body['message']['from']['language_code']
     ]);
 }
+if (isset($body['message']['text'])) {
+    preg_match("/^\/(\w+)/", $body['message']['text'], $matches);
+    if (isset($matches[1]) {
+        $command = mb_strtolower($matches[1]);
+    }
+}
+
 if ($pdo && isset($body['message']['chat']['type']) && $body['message']['chat']['type'] !== "private") {
     //this is a group chat, save the title/name:
     $statement = $pdo->prepare("
@@ -92,7 +100,7 @@ if ($pdo && isset($body['message']['chat']['type']) && $body['message']['chat'][
         'title' => $body['message']['chat']['title']
     ]);
 }
-if (stripos($body['message']['text'], "/help") === 0) {
+if ($command === "help") {
     //displays a help-message:
     $message = "This is a bot for the roleplaying game Arepo. And these are my commands you can use:\n";
     $message .= "*/help* : Get this info.\n";
@@ -105,7 +113,7 @@ if (stripos($body['message']['text'], "/help") === 0) {
     }
     $message .= "*/simulate* : /simulate 4 would roll thousand of times 4 dice and calculate the propabilities for each result from 0 - 18. Or by /simulate 4 versus 5 you get the probabilities that 4 dice would win against 5 dice.\n";
 }
-if (stripos($body['message']['text'], "/roll") === 0) {
+if ($command === "roll") {
     //rolls dice in the arepo way:
     preg_match("/^\/roll\s+(\d+)/", $body['message']['text'], $matches);
     $dice = $matches[1];
@@ -140,7 +148,7 @@ if (stripos($body['message']['text'], "/roll") === 0) {
         ];
     }
 }
-if (stripos($body['message']['text'], "/mycards") === 0) {
+if ($command === "mycards") {
     //displays my own cards in a private chat:
     if (!$pdo) {
         $message = "Sorry! It's no database connected. You have no cards.";
@@ -219,7 +227,7 @@ if (stripos($body['message']['text'], "/mycards") === 0) {
         }
     }
 }
-if (stripos($body['message']['text'], "/drawcard") === 0) {
+if ($command === "draw" || $command === "drawcard") {
     if (!$pdo) {
         $message = "Sorry! It's no database connected.";
     } else {
@@ -257,7 +265,7 @@ if (stripos($body['message']['text'], "/drawcard") === 0) {
         }
     }
 }
-if (stripos($body['message']['text'], "/undrawcard") === 0) {
+if ($command === "undraw" || $command === "undrawcard") {
     if (!$pdo) {
         $message = "Sorry! It's no database connected.";
     } else {
@@ -283,7 +291,7 @@ if (stripos($body['message']['text'], "/undrawcard") === 0) {
         }
     }
 }
-if (stripos($body['message']['text'], "/play") === 0) {
+if ($command === "play" || $command === "playcard") {
     if (!$pdo) {
         $message = "Sorry! It's no database connected.";
     } else {
@@ -371,7 +379,7 @@ if (stripos($body['message']['text'], "/play") === 0) {
         }
     }
 }
-if (stripos($body['message']['text'], "/simulate") === 0) {
+if ($command === "simulate") {
     preg_match("/^\/simulate\s+(\d+)(\s+\w+)?(\s+(\d+))?/", $body['message']['text'], $matches);
     $dice_a = $matches[1];
     $dice_b = $matches[4];
