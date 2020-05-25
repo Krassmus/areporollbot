@@ -81,7 +81,7 @@ if ($pdo && isset($body['message']['from'])) {
 }
 if (isset($body['message']['text'])) {
     preg_match("/^\/(\w+)/", $body['message']['text'], $matches);
-    if (isset($matches[1]) {
+    if (isset($matches[1])) {
         $command = mb_strtolower($matches[1]);
     }
 }
