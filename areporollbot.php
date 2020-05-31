@@ -396,7 +396,7 @@ if ($command === "allcards" && $body['message']['chat']['type'] !== "private") {
     if (count($players)) {
         $message = [];
         foreach ($players as $player) {
-            $message[] = $player['first_name']." has ".$player['number']." cards."
+            $message[] = $player['first_name']." has ".$player['number']." cards.";
         }
         $message = implode("\n", $message);
     } else {
