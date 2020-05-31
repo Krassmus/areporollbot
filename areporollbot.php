@@ -379,6 +379,30 @@ if ($command === "play" || $command === "playcard") {
         }
     }
 }
+if ($command === "allcards" && $body['message']['chat']['type'] !== "private") {
+    $statement = $pdo->prepare("
+        SELECT players.*, COUNT(*) AS number
+        FROM playercards
+            INNER JOIN cards ON (cards.card_id = playercards.card_id)
+            INNER JOIN players ON (players.id = playercards.player_id)
+        WHERE chat_id = :chat_id
+        GROUP BY players.id
+        ORDER BY players.first_name ASC
+    ");
+    $statement->execute([
+        'chat_id' => $body['message']['chat']['id']
+    ]);
+    $players = $statement->fetchAll(PDO::FETCH_ASSOC);
+    if (count($players)) {
+        $message = [];
+        foreach ($players as $player) {
+            $message[] = $player['first_name']." has ".$player['number']." cards."
+        }
+        $message = implode("\n", $message);
+    } else {
+        $message = "Noone has any card :(";
+    }
+}
 if ($command === "simulate") {
     preg_match("/^\/simulate\s+(\d+)(\s+\w+)?(\s+(\d+))?/", $body['message']['text'], $matches);
     $dice_a = $matches[1];
