@@ -400,7 +400,7 @@ if ($command === "allcards" && $body['message']['chat']['type'] !== "private") {
         }
         $message = implode("\n", $message);
     } else {
-        $message = "Noone has any card :(";
+        $message = "Noone has any card. Too bad.";
     }
 }
 if ($command === "simulate") {
